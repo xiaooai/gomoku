@@ -10,6 +10,7 @@ from tqdm import tqdm
 import json
 
 from game.environment import GomokuEnvironment
+from game.factory import create_gomoku_env
 from ppo.agent import PPOAgent
 
 
@@ -19,7 +20,7 @@ def parse_args():
     
     # 模型参数
     parser.add_argument('--model-path', type=str, required=True, help='模型路径')
-    parser.add_argument('--board-size', type=int, default=15, help='棋盘大小')
+    parser.add_argument('--board-size', type=int, default=9, help='棋盘大小')
     parser.add_argument('--hidden-dim', type=int, default=512, help='隐藏层维度')
     
     # 评估参数
@@ -130,10 +131,13 @@ def evaluate_agent(agent, env, num_games, save_games=False):
         
         results['total_rewards'].append(game_record['total_reward'])
         results['game_lengths'].append(game_record['game_length'])
-        
+
+        # 打印result胜利，平局，失败)
+        print(f"当前统计：胜利 {results['wins']}，平局 {results['draws']}，失败 {results['losses']}")
         # 计算当前胜率
         current_win_rate = results['wins'] / (game_idx + 1)
         results['win_rates'].append(current_win_rate)
+        print(f"游戏 {game_idx + 1} 结果：胜率 {current_win_rate:.3f}")
         
         if save_games:
             results['games'].append(game_record)

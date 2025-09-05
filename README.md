@@ -34,24 +34,48 @@ pip install -r requirements.txt
 
 ### 1. 训练模型
 
-基本训练：
+#### 基本训练
 ```bash
 python train.py
 ```
 
-自定义参数训练：
+#### 并行环境训练
+```bash
+# 使用4个并行环境
+python train.py --num-envs 4
+
+# 使用向量化环境
+python train.py --num-envs 8 --use-vectorized
+```
+
+#### 恢复训练
+```bash
+# 指定模型文件恢复
+python train.py --resume ./models/ppo_gomoku_episode_1000.pth
+
+# 自动恢复最新检查点
+python train.py --auto-resume
+
+# 使用并行环境恢复训练
+python train.py --auto-resume --num-envs 8 --use-vectorized
+```
+
+#### 自定义参数训练
 ```bash
 python train.py --num-episodes 5000 --board-size 15 --lr 3e-4 --device cuda
 ```
-<!-- python train.py --num-episodes 100 --board-size 9 --lr 1e-2 --device cuda -->
 
 主要训练参数：
 - `--num-episodes`: 训练轮数（默认10000）
 - `--board-size`: 棋盘大小（默认15）
+- `--num-envs`: 并行环境数量（默认16）
+- `--use-vectorized`: 使用向量化环境
 - `--lr`: 学习率（默认3e-4）
-- `--num-steps`: 每轮收集步数（默认2048）
-- `--batch-size`: 批次大小（默认64）
+- `--num-steps`: 每轮收集步数（默认4096）
+- `--batch-size`: 批次大小（默认2048）
 - `--device`: 设备选择（auto/cpu/cuda）
+- `--resume`: 恢复训练的模型路径
+- `--auto-resume`: 自动恢复最新检查点
 
 ### 2. 评估模型
 
@@ -102,9 +126,13 @@ python play.py --model-path ./models/ppo_gomoku_final.pth
 
 - ✅ 使用PyTorch实现神经网络
 - ✅ 支持GPU加速训练
+- ✅ 并行环境训练支持（3-4倍速度提升）
+- ✅ 向量化环境优化
 - ✅ 可配置的训练参数
 - ✅ 实时训练进度监控
 - ✅ 支持模型保存和加载
+- ✅ 自动检查点恢复功能
+- ✅ 智能检查点管理
 - ✅ 完整的评估和测试工具
 - ✅ 人机对战功能
 - ✅ 训练曲线可视化
@@ -113,20 +141,28 @@ python play.py --model-path ./models/ppo_gomoku_final.pth
 ## 训练建议
 
 1. **硬件要求**: 建议使用GPU进行训练，CPU训练速度较慢
-2. **训练时间**: 完整训练需要数小时到数天，取决于硬件配置
-3. **参数调优**: 可以调整学习率、批次大小等参数来优化训练效果
-4. **监控训练**: 关注胜率、奖励等指标来判断训练效果
+2. **并行环境**: 使用4-8个并行环境可以显著提升训练速度
+3. **训练时间**: 完整训练需要数小时到数天，取决于硬件配置
+4. **参数调优**: 可以调整学习率、批次大小等参数来优化训练效果
+5. **监控训练**: 关注胜率、奖励等指标来判断训练效果
+6. **检查点管理**: 定期保存检查点，支持中断后恢复训练
+7. **内存管理**: 并行环境会占用更多内存，根据系统配置调整环境数量
 
 ## 文件说明
 
 - `game/board.py`: 实现五子棋的基本规则和棋盘逻辑
 - `game/environment.py`: 实现Gym风格的游戏环境
+- `game/parallel_env.py`: 并行环境包装器实现
 - `model/network.py`: 定义神经网络架构
 - `ppo/agent.py`: 实现PPO算法核心逻辑
 - `ppo/memory.py`: 实现经验回放缓冲区
-- `train.py`: 主训练脚本
+- `train.py`: 主训练脚本（支持并行环境和恢复训练）
 - `evaluate.py`: 模型评估脚本
 - `play.py`: 人机对战脚本
+- `test_parallel.py`: 并行环境测试脚本
+- `test_resume.py`: 恢复训练功能测试脚本
+- `resume_training_examples.py`: 恢复训练使用示例
+- `PARALLEL_ENV_GUIDE.md`: 并行环境使用指南
 
 ## 注意事项
 

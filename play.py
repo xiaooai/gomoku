@@ -6,6 +6,7 @@ import argparse
 import numpy as np
 import torch
 from game.environment import GomokuEnvironment
+from game.factory import create_gomoku_env
 from ppo.agent import PPOAgent
 
 

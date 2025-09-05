@@ -95,7 +95,7 @@ python train.py
     --reward-type dense 
     --use-advanced-state 
     --board-size 15 
-    --num-envs 16
+    --num-envs 4
 ```
 
 ### 参数说明

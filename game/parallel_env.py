@@ -5,12 +5,14 @@ import numpy as np
 import torch
 from typing import List, Tuple, Dict, Any, Optional
 from .environment import GomokuEnvironment
+from .factory import create_gomoku_env
 
 
 class ParallelEnvironment:
     """并行环境包装器，用于同时运行多个环境实例"""
     
-    def __init__(self, num_envs: int, board_size: int = 15, device: str = 'cpu'):
+    def __init__(self, num_envs: int, board_size: int = 15, device: str = 'cpu', 
+                 env_config: str = 'standard', **env_kwargs):
         """
         初始化并行环境
         
@@ -18,16 +20,20 @@ class ParallelEnvironment:
             num_envs: 并行环境数量
             board_size: 棋盘大小
             device: 设备
+            env_config: 环境配置类型
+            **env_kwargs: 环境额外参数
         """
         self.num_envs = num_envs
         self.board_size = board_size
         self.device = device
+        self.env_config = env_config
         
         # 创建多个环境实例
-        self.envs = [GomokuEnvironment(board_size) for _ in range(num_envs)]
+        self.envs = [create_gomoku_env(env_config, board_size=board_size, **env_kwargs) 
+                    for _ in range(num_envs)]
         
         # 环境状态
-        self.states = np.zeros((num_envs, 3, board_size, board_size), dtype=np.float32)
+        self.states = np.zeros((num_envs, 6, board_size, board_size), dtype=np.float32)
         self.dones = np.zeros(num_envs, dtype=bool)
         self.episode_rewards = np.zeros(num_envs, dtype=np.float32)
         self.episode_lengths = np.zeros(num_envs, dtype=int)
@@ -43,7 +49,8 @@ class ParallelEnvironment:
             所有环境的初始状态 [num_envs, 3, board_size, board_size]
         """
         for i, env in enumerate(self.envs):
-            self.states[i] = env.reset()
+            state, _ = env.reset()
+            self.states[i] = state
             self.dones[i] = False
             self.episode_rewards[i] = 0.0
             self.episode_lengths[i] = 0
@@ -68,7 +75,8 @@ class ParallelEnvironment:
         for i, env in enumerate(self.envs):
             if not self.dones[i]:
                 # 执行动作
-                obs, reward, done, info = env.step(actions[i])
+                obs, reward, terminated, truncated, info = env.step(actions[i])
+                done = terminated or truncated
                 
                 observations[i] = obs
                 rewards[i] = reward
@@ -87,7 +95,8 @@ class ParallelEnvironment:
                     info['episode_reward'] = self.episode_rewards[i]
                     info['episode_length'] = self.episode_lengths[i]
                     
-                    self.states[i] = env.reset()
+                    state, _ = env.reset()
+                    self.states[i] = state
                     self.dones[i] = False
                     self.episode_rewards[i] = 0.0
                     self.episode_lengths[i] = 0
@@ -166,7 +175,8 @@ class ParallelEnvironment:
 class VectorizedEnvironment:
     """向量化环境，使用批量操作提高效率"""
     
-    def __init__(self, num_envs: int, board_size: int = 15, device: str = 'cpu'):
+    def __init__(self, num_envs: int, board_size: int = 15, device: str = 'cpu',
+                 env_config: str = 'standard', **env_kwargs):
         """
         初始化向量化环境
         
@@ -174,16 +184,20 @@ class VectorizedEnvironment:
             num_envs: 并行环境数量
             board_size: 棋盘大小
             device: 设备
+            env_config: 环境配置类型
+            **env_kwargs: 环境额外参数
         """
         self.num_envs = num_envs
         self.board_size = board_size
         self.device = device
+        self.env_config = env_config
         
         # 创建多个环境实例
-        self.envs = [GomokuEnvironment(board_size) for _ in range(num_envs)]
+        self.envs = [create_gomoku_env(env_config, board_size=board_size, **env_kwargs) 
+                    for _ in range(num_envs)]
         
         # 环境状态
-        self.states = np.zeros((num_envs, 3, board_size, board_size), dtype=np.float32)
+        self.states = np.zeros((num_envs, 6, board_size, board_size), dtype=np.float32)
         self.dones = np.zeros(num_envs, dtype=bool)
         self.episode_rewards = np.zeros(num_envs, dtype=np.float32)
         self.episode_lengths = np.zeros(num_envs, dtype=int)
@@ -199,7 +213,8 @@ class VectorizedEnvironment:
             所有环境的初始状态 [num_envs, 3, board_size, board_size]
         """
         for i, env in enumerate(self.envs):
-            self.states[i] = env.reset()
+            state, _ = env.reset()
+            self.states[i] = state
             self.dones[i] = False
             self.episode_rewards[i] = 0.0
             self.episode_lengths[i] = 0
@@ -227,7 +242,8 @@ class VectorizedEnvironment:
         
         for i in active_indices:
             env = self.envs[i]
-            obs, reward, done, info = env.step(actions[i])
+            obs, reward, terminated, truncated, info = env.step(actions[i])
+            done = terminated or truncated
             
             observations[i] = obs
             rewards[i] = reward
@@ -246,7 +262,8 @@ class VectorizedEnvironment:
                 info['episode_reward'] = self.episode_rewards[i]
                 info['episode_length'] = self.episode_lengths[i]
                 
-                self.states[i] = env.reset()
+                state, _ = env.reset()
+                self.states[i] = state
                 self.dones[i] = False
                 self.episode_rewards[i] = 0.0
                 self.episode_lengths[i] = 0

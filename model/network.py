@@ -25,7 +25,7 @@ class PolicyNetwork(nn.Module):
         self.action_dim = board_size * board_size
         
         # 卷积层提取特征
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(6, 64, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.conv3 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
         
@@ -203,7 +203,7 @@ class ValueNetwork(nn.Module):
         self.board_size = board_size
         
         # 卷积层
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(6, 64, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.conv3 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
         
